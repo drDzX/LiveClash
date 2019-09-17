@@ -48,7 +48,7 @@ namespace TeamCAD_LiveClash
 
             //Dodavanje dugmica            
 
-            PushButton pushButtonSD = panel.AddItem(new PushButtonData("When you want to quit your job", "KILL", assembly, "TeamCAD_LiveClash.RegisterUpdater")) as PushButton;
+            PushButton pushButtonSD = panel.AddItem(new PushButtonData("Enable collision tracking", "Collision", assembly, "TeamCAD_LiveClash.RegisterUpdater")) as PushButton;
 
 
 

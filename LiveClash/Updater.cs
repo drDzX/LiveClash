@@ -34,11 +34,11 @@ namespace TeamCAD_LiveClash
             }
             else
             {
-                UpdaterRegistry.RegisterUpdater(updater, true);
-                ElementCategoryFilter filter = new ElementCategoryFilter(BuiltInCategory.OST_Rooms);
+                UpdaterRegistry.RegisterUpdater(updater, false);
+                ElementCategoryFilter filter = new ElementCategoryFilter(BuiltInCategory.OST_DuctCurves);
                 ElementId paramId = new ElementId(BuiltInParameter.ROOM_AREA);
 
-                UpdaterRegistry.AddTrigger(updater.GetUpdaterId(), filter, Element.GetChangeTypeParameter(paramId));
+                UpdaterRegistry.AddTrigger(updater.GetUpdaterId(), filter, Element.GetChangeTypeElementAddition());
             }        
 
             return Result.Succeeded;
@@ -59,12 +59,27 @@ namespace TeamCAD_LiveClash
 
         public void Execute(UpdaterData data)
         {
-            Func<ICollection<ElementId>, string> toString = ids => ids.Aggregate("", (ss, id) => ss + "," + id).TrimStart(',');
-            var sb = new StringBuilder();
-            sb.AppendLine("added:" + toString(data.GetAddedElementIds()));
-            sb.AppendLine("modified:" + toString(data.GetModifiedElementIds()));
-            sb.AppendLine("deleted:" + toString(data.GetDeletedElementIds()));
-            TaskDialog.Show("Changes", sb.ToString());
+            //Func<ICollection<ElementId>, string> toString = ids => ids.Aggregate("", (ss, id) => ss + "," + id).TrimStart(',');
+            //var sb = new StringBuilder();
+            //sb.AppendLine("added:" + toString(data.GetAddedElementIds()));
+            //sb.AppendLine("modified:" + toString(data.GetModifiedElementIds()));
+            //sb.AppendLine("deleted:" + toString(data.GetDeletedElementIds()));
+            //TaskDialog.Show("Changes", sb.ToString());
+            Document doc = data.GetDocument();
+            Application app = doc.Application;
+            foreach (ElementId id in data.GetAddedElementIds())
+            {
+              //  TaskDialog.Show("ElevationWatcher Updater", string.Format("New elevation view '{0}'", data.GetAddedElementIds()));
+                ElementIntersectsElementFilter EIEF = new ElementIntersectsElementFilter(doc.GetElement(id));
+                FilteredElementCollector collector = new FilteredElementCollector(doc);
+                collector.WherePasses(EIEF);
+                ICollection<Element> allLoads = collector.ToElements();
+                if(allLoads.Count>0)
+                {
+                    TaskDialog.Show("Collision tracker", string.Format("This path have '{0}' collisions.", allLoads.Count));
+
+                }
+            }
         }
 
         public string GetAdditionalInformation()
