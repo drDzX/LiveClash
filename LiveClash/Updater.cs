@@ -27,7 +27,7 @@ namespace TeamCAD_LiveClash
             Document doc = a.ActiveUIDocument.Document;
 
             ClashUpdater updater = new ClashUpdater(a.ActiveAddInId.GetGUID());
-           // UpdaterRegistry.UnregisterUpdater(updater.GetUpdaterId());
+            // UpdaterRegistry.UnregisterUpdater(updater.GetUpdaterId());
             if (UpdaterRegistry.IsUpdaterRegistered(updater.GetUpdaterId()))
             {
                 UpdaterRegistry.UnregisterUpdater(updater.GetUpdaterId());
@@ -39,7 +39,7 @@ namespace TeamCAD_LiveClash
                 ElementId paramId = new ElementId(BuiltInParameter.ROOM_AREA);
 
                 UpdaterRegistry.AddTrigger(updater.GetUpdaterId(), filter, Element.GetChangeTypeElementAddition());
-            }        
+            }
 
             return Result.Succeeded;
 
@@ -69,14 +69,66 @@ namespace TeamCAD_LiveClash
             Application app = doc.Application;
             foreach (ElementId id in data.GetAddedElementIds())
             {
-              //  TaskDialog.Show("ElevationWatcher Updater", string.Format("New elevation view '{0}'", data.GetAddedElementIds()));
-                ElementIntersectsElementFilter EIEF = new ElementIntersectsElementFilter(doc.GetElement(id));
                 FilteredElementCollector collector = new FilteredElementCollector(doc);
-                collector.WherePasses(EIEF);
-                ICollection<Element> allLoads = collector.ToElements();
-                if(allLoads.Count>0)
+                //  TaskDialog.Show("ElevationWatcher Updater", string.Format("New elevation view '{0}'", data.GetAddedElementIds()));
+                ElementIntersectsElementFilter EIEF = new ElementIntersectsElementFilter(doc.GetElement(id));
+               
+                //collector.WherePasses(EIEF);
+                //ICollection<Element> allLoads = collector.ToElements();
+                List<Element> Collisions = new List<Element>();
+
+                IList<Element> elems = collector.OfCategory(BuiltInCategory.OST_RvtLinks).OfClass(typeof(RevitLinkType)).ToElements();
+                foreach (Element e in elems)
                 {
-                    TaskDialog.Show("Collision tracker", string.Format("This path have '{0}' collisions.", allLoads.Count));
+
+                   
+
+                    RevitLinkType linkType = e as RevitLinkType;
+
+                    String s = String.Empty;
+
+
+
+                    foreach (Document linkedDoc in app.Documents)
+
+                    {
+                     //   TaskDialog.Show("Collision tracker", string.Format("A {0}  // {1}", linkedDoc.Title + ".rvt", linkType.Name));
+
+                        if (linkedDoc.Title+".rvt" ==(linkType.Name))
+                        {
+
+
+                            FilteredElementCollector collLinked = new FilteredElementCollector(linkedDoc);
+
+                            collLinked.WherePasses(EIEF);
+
+                           // Collisions=collLinked.ToElements();
+
+
+                          //  TaskDialog.Show("Collision tracker", string.Format(" {0} ", Collisions.Count));
+                    
+                            foreach (Element el in collLinked.ToElements())
+                            {
+                                Collisions.Add(el);
+                                TaskDialog.Show("ElevationWatcher Updater", string.Format("El Name: {0}  File: {1}", el.Name, linkedDoc.Title));
+                            }
+
+                        }
+                    }
+
+                }
+
+                FilteredElementCollector _collector = new FilteredElementCollector(doc);
+                _collector.WherePasses(EIEF);
+                foreach (Element el in _collector.ToElements())
+                {
+                    Collisions.Add(el);
+                    
+                }
+
+                if (Collisions.Count > 0)
+                {
+                    TaskDialog.Show("Collision tracker", string.Format("This path have '{0}' collisions.", Collisions.Count));
 
                 }
             }
